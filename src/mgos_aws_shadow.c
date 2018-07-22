@@ -511,6 +511,27 @@ bool mgos_aws_shadow_update_simple(double version, const char *state_json) {
   return mgos_aws_shadow_updatef(version, "%s", state_json);
 }
 
+bool mgos_aws_shadow_clear_desired()
+{
+  bool res = false;
+  struct update_pending *up = NULL;
+  if (s_shadow_state == NULL && !mgos_aws_shadow_init()) return false;
+  up = (struct update_pending *) calloc(1, sizeof(*up));
+  if (up == NULL) return false;
+  mbuf_init(&up->data, 50);
+  char token[TOKEN_BUF_SIZE];
+  calc_token(s_shadow_state, token);
+  struct json_out out = JSON_OUT_MBUF(&up->data);
+  json_printf(&out, "{state: {desired: null } ");
+  json_printf(&out, ", clientToken: \"%s\"}", token);
+  mgos_rlock(s_shadow_state->lock);
+  STAILQ_INSERT_TAIL(&s_shadow_state->update_entries, up, link);
+  mgos_runlock(s_shadow_state->lock);
+  mongoose_schedule_poll(false /* from_isr */);
+  res = true;
+  return res;
+}
+
 const char *mgos_aws_shadow_event_name(enum mgos_aws_shadow_event ev) {
   switch (ev) {
     case MGOS_AWS_SHADOW_CONNECTED:
