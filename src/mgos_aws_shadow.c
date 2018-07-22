@@ -551,7 +551,10 @@ const char *mgos_aws_shadow_event_name(enum mgos_aws_shadow_event ev) {
 }
 
 static void update_cb(int ev, void *ev_data, void *userdata) {
+  LOG(LL_INFO, ("here"));
   struct mgos_shadow_update_data *data = ev_data;
+  LOG(LL_INFO, ("data %d", data->version));
+  LOG(LL_INFO, ("data %s", data->json_fmt));
   mgos_aws_shadow_updatevf(data->version, data->json_fmt, data->ap);
   (void) userdata;
   (void) ev;
